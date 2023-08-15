@@ -168,5 +168,5 @@ def bulk_download(outdir: str, output_size: int, primary_site: str='Blood',
         file_name = row['file_name']
         uuid = row['id']
         if file_name.endswith('augmented_star_gene_counts.tsv'):
-            print(gdc_data(file_id=uuid, output_dir=outdir))
+            gdc_data(file_id=uuid, output_dir=outdir)
     return meta_filename

@@ -22,7 +22,7 @@ def load_exp_metadata(datadir: str, filename: str, graph:Graph):
     Load the metadata.
     :return:
     """
-    log.info("Loading GDC data with File {} at {}".format(filename, datadir))
+    log.info("Loading GDC meta data with File {}".format(filename, datadir))
     exp_metainfo = pd.read_csv(os.path.join(datadir, filename), header=0, index_col=None, sep='\t')
     exp_metainfo = exp_metainfo[exp_metainfo['file_name'].str.contains('augmented_star_gene_counts.tsv')]
     for ind, row in exp_metainfo.iterrows():
@@ -74,8 +74,8 @@ def load_expression_data(file: str, measurement_id: str, graph: Graph):
     :param graph:
     :return:
     """
-    log.info("Loading {}".format(file))
-    expr_df = pd.read_csv(file, header=None, index_col=None, sep='\t', skiprows=5)
+    log.info("Loading expression data with {}".format(file))
+    expr_df = pd.read_csv(file, header=None, index_col=None, sep='\t', skiprows=6)
     for ind, row in expr_df.iterrows():
         # Create nodes and relationship
         expression = NodeSet(['Expression'], merge_keys=['uid'])

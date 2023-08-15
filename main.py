@@ -2,8 +2,10 @@ __author__ = 'Peeyush Sahu'
 # System import
 import logging
 import os
+import json
+import sys
 # Local import
-from datamodel import gdc_upload
+from data_loader import gdc_upload
 from data_operations import gdc_api
 # Third party imports
 from neo4j import GraphDatabase
