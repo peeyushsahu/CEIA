@@ -22,10 +22,15 @@ def load_exp_metadata(datadir: str, filename: str, graph:Graph):
     Load the metadata.
     :return:
     """
-    log.info("Loading GDC meta data with File {}".format(filename, datadir))
+    log.info("Loading GDC meta data with File {}".format(filename))
+
+    # Read and filter metadata
     exp_metainfo = pd.read_csv(os.path.join(datadir, filename), header=0, index_col=None, sep='\t')
-    exp_metainfo = exp_metainfo[exp_metainfo['file_name'].str.contains('augmented_star_gene_counts.tsv')]
+    exp_metainfo = exp_metainfo[exp_metainfo['file_name'].str.contains('augmented_star_gene_counts.tsv') |
+                                exp_metainfo['file_name'].str.contains('mirnaseq.mirnas.quantification.txt')]
+    # Start loading metadata
     for ind, row in exp_metainfo.iterrows():
+        log.debug("File name {}".format(row['file_name']))
         project = NodeSet(['Project'], merge_keys=['id'])
         disease = NodeSet(['Disease'], merge_keys=['name'])
         sample = NodeSet(['Sample'], merge_keys=['id']) # sample_type
@@ -48,7 +53,7 @@ def load_exp_metadata(datadir: str, filename: str, graph:Graph):
         project.add_node({'id': project_id})
         disease.add_node({'name': disease_name})
         sample.add_node({'id': sample_id, 'sample_type': row['cases.0.samples.0.sample_type']})
-        measurement.add_node({'id': measurement_id})
+        measurement.add_node({'id': measurement_id, 'type': 'mRNA'})
 
         # Add relationships
         project_datafrom_disease.add_relationship({'id': project_id}, {'name': disease_name}, {})
@@ -62,21 +67,30 @@ def load_exp_metadata(datadir: str, filename: str, graph:Graph):
             rs.create_index(graph=graph)
             rs.merge(graph=graph)
 
-        expression_file = os.path.join(datadir, row['file_name'])
-        load_expression_data(expression_file, measurement_id, graph)
+        if row['file_name'].endswith('augmented_star_gene_counts.tsv'):
+            mRNA_file = os.path.join(datadir, row['file_name'])
+            load_mRNA_data(mRNA_file, measurement_id, graph)
+        elif row['file_name'].endswith('mirnaseq.mirnas.quantification.txt'):
+            miRNA_file = os.path.join(datadir, row['file_name'])
+            load_miRNA_data(miRNA_file, measurement_id, graph)
 
 
-def load_expression_data(file: str, measurement_id: str, graph: Graph):
+def load_mRNA_data(file: str, measurement_id: str, graph: Graph):
     """
-    Load expression data.
-    :param file:
-    :param measurement_id:
-    :param graph:
-    :return:
+    Load mRNA expression data.
+    Parameters
+    ----------
+    file
+    measurement_id
+    graph
+
+    Returns
+    -------
+
     """
-    log.info("Loading expression data with {}".format(file))
+    log.info("Loading mRNA expression data with {}".format(file))
     expr_df = pd.read_csv(file, header=None, index_col=None, sep='\t', skiprows=6)
-    for ind, row in expr_df.iterrows():
+    for ind, row in expr_df[:10].iterrows():
         # Create nodes and relationship
         expression = NodeSet(['Expression'], merge_keys=['uid'])
         gene = NodeSet(['Gene'], merge_keys=['id'])
@@ -102,3 +116,44 @@ def load_expression_data(file: str, measurement_id: str, graph: Graph):
             rs.create_index(graph=graph)
             rs.merge(graph=graph)
 
+
+def load_miRNA_data(file: str, measurement_id: str, graph: Graph):
+    """
+    Load miRNA expression data
+    Parameters
+    ----------
+    file
+    measurement_id
+    graph
+
+    Returns
+    -------
+
+    """
+    log.info("Loading miRNA expression data with {}".format(file))
+    expr_df = pd.read_csv(file, header=0, index_col=None, sep='\t')
+    for ind, row in expr_df[:10].iterrows():
+        # Create nodes and relationship
+        expression = NodeSet(['Expression'], merge_keys=['uid'])
+        gene = NodeSet(['Gene'], merge_keys=['id'])
+        measurement_resultedto_expression = RelationshipSet('RESULTED_TO', ['Measurement'], ['Expression'], ['id'], ['uid'])
+        expression_belongsto_gene = RelationshipSet('BELONGS_TO', ['Expression'], ['Gene'], ['uid'], ['id'])
+
+        nodeset = [expression, gene]
+        relationset = [measurement_resultedto_expression, expression_belongsto_gene]
+
+        UID = str(uuid4())
+        gene_id = row['miRNA_ID']
+        # Add nodes
+        expression.add_node({'uid': UID, 'raw': row['read_count'], 'rpm': row['reads_per_million_miRNA_mapped']})
+        gene.add_node({'id': gene_id, 'name': '-', 'type': 'miRNA'})
+        # Add relationship
+        measurement_resultedto_expression.add_relationship({'id': measurement_id}, {'uid': UID}, {})
+        expression_belongsto_gene.add_relationship({'uid': UID}, {'id': gene_id}, {})
+
+        for nd in nodeset:
+            nd.create_index(graph=graph)
+            nd.merge(graph=graph)
+        for rs in relationset:
+            rs.create_index(graph=graph)
+            rs.merge(graph=graph)

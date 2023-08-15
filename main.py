@@ -27,10 +27,10 @@ driver = GraphDatabase.driver('neo4j://{}:{}'.format(NEO4J_HOST, NEO4J_PORT), au
 
 # Start the FDC data download
 meta_file_name = gdc_api.bulk_download(primary_site='Blood',
-                                       experiment_strategy="RNA-Seq",
+                                       experiment_strategy=['RNA-Seq', 'miRNA-Seq'],
                                        file_format="TSV",
                                        outdir=OUTPUT_DIRECTORY,
-                                       output_size=5)
+                                       output_size=40)
 
 # Start upload in neo4j database
 gdc_upload.get_metadata(datadir=OUTPUT_DIRECTORY, filename=meta_file_name, graph=driver)

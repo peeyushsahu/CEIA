@@ -4,6 +4,7 @@ import logging
 import json
 import re
 import os
+from typing import List, Union
 from datetime import datetime
 # Third party imports
 import pandas as pd
@@ -11,7 +12,7 @@ import pandas as pd
 log = logging.getLogger(__name__)
 
 
-def gdc_meta_filter(primary_site: str='Blood', experiment_strategy: str="RNA-Seq",
+def gdc_meta_filter(primary_site: str='Blood', experiment_strategy: List[str]=['RNA-Seq', 'miRNA-Seq'],
                     file_format: str="TSV", output_dir: str=None, output_size: int=20):
     """
     API call for retrieving file ids with metadata (fields) using filters
@@ -49,7 +50,7 @@ def gdc_meta_filter(primary_site: str='Blood', experiment_strategy: str="RNA-Seq
                 "op": "in",
                 "content": {
                     "field": "files.experimental_strategy",
-                    "value": [experiment_strategy]
+                    "value": experiment_strategy
                 }
             },
             {
@@ -70,14 +71,14 @@ def gdc_meta_filter(primary_site: str='Blood', experiment_strategy: str="RNA-Seq
     }
     # The parameters are passed to 'json' rather than 'params' in this case
     response = requests.post(files_endpt, headers={"Content-Type": "application/json"}, json=params)
-    file_id = '_'.join([primary_site, experiment_strategy, file_format, str(output_size), datetime.now().strftime("%y%m%d%H%M%S")])
+    file_id = '_'.join([primary_site, '_'.join(experiment_strategy), file_format, str(output_size), datetime.now().strftime("%y%m%d%H%M%S")])
     if output_dir:
         file_name = os.path.join(output_dir, file_id+'.tsv')
         log.debug("Saving metadata in {}".format(file_name))
         with open(file_name, "w") as fo:
             fo.write(response.content.decode("utf-8").replace('\r\n', '\n'))
             fo.close()
-        return file_name
+        return file_id+'.tsv'
     else:
         raise ValueError("Please provide output dir to save the meta data file.")
 
@@ -148,8 +149,8 @@ def gdc_data(file_id: str, output_dir: str=None):
     return file_name
 
 
-def bulk_download(outdir: str, output_size: int, primary_site: str='Blood',
-                  experiment_strategy: str="RNA-Seq", file_format: str="TSV"):
+def bulk_download(outdir: str, output_size: int, primary_site: str=None,
+                  experiment_strategy: List[str]=[None], file_format: str=None):
     """
     Do a bulk download for data files using specific filters.
     :param outdir:
@@ -163,10 +164,15 @@ def bulk_download(outdir: str, output_size: int, primary_site: str='Blood',
     meta_filename = gdc_meta_filter(primary_site=primary_site, experiment_strategy=experiment_strategy,
                                     file_format=file_format, output_dir=outdir, output_size=output_size)
 
-    meta_file = pd.read_csv(meta_filename, header=0, index_col=None, sep='\t')
+    meta_file = pd.read_csv(os.path.join(outdir, meta_filename), header=0, index_col=None, sep='\t')
     for ind, row in meta_file.iterrows():
         file_name = row['file_name']
         uuid = row['id']
-        if file_name.endswith('augmented_star_gene_counts.tsv'):
+        if file_name.endswith('augmented_star_gene_counts.tsv') | \
+                file_name.endswith('mirnaseq.mirnas.quantification.txt'):
             gdc_data(file_id=uuid, output_dir=outdir)
     return meta_filename
+
+
+#gdc_meta_filter(primary_site='Blood', experiment_strategy=['RNA-Seq', 'miRNA-Seq'],
+#                    file_format="TSV", output_dir="C://Users//peeyushsahu//Downloads//ATGC", output_size=200)
