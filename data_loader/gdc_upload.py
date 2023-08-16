@@ -53,7 +53,7 @@ def load_exp_metadata(datadir: str, filename: str, graph:Graph):
         project.add_node({'id': project_id})
         disease.add_node({'name': disease_name})
         sample.add_node({'id': sample_id, 'sample_type': row['cases.0.samples.0.sample_type']})
-        measurement.add_node({'id': measurement_id, 'type': 'mRNA'})
+        measurement.add_node({'id': measurement_id, 'type': row['experimental_strategy']})
 
         # Add relationships
         project_datafrom_disease.add_relationship({'id': project_id}, {'name': disease_name}, {})
@@ -103,7 +103,7 @@ def load_mRNA_data(file: str, measurement_id: str, graph: Graph):
         UID = str(uuid4())
         gene_id = row[0]
         # Add nodes
-        expression.add_node({'uid': UID, 'raw': row[3], 'fpkm': row[6]})
+        expression.add_node({'uid': UID, 'raw': row[3], 'norm': row[6], 'norm_type': 'fpkm'})
         gene.add_node({'id': gene_id, 'name': row[1], 'type': row[2]})
         # Add relationship
         measurement_resultedto_expression.add_relationship({'id': measurement_id}, {'uid': UID}, {})
@@ -145,7 +145,7 @@ def load_miRNA_data(file: str, measurement_id: str, graph: Graph):
         UID = str(uuid4())
         gene_id = row['miRNA_ID']
         # Add nodes
-        expression.add_node({'uid': UID, 'raw': row['read_count'], 'rpm': row['reads_per_million_miRNA_mapped']})
+        expression.add_node({'uid': UID, 'raw': row['read_count'], 'norm': row['reads_per_million_miRNA_mapped'], 'norm_type': 'rpm'})
         gene.add_node({'id': gene_id, 'name': '-', 'type': 'miRNA'})
         # Add relationship
         measurement_resultedto_expression.add_relationship({'id': measurement_id}, {'uid': UID}, {})

@@ -27,6 +27,7 @@ def gdc_meta_filter(primary_site: str='Blood', experiment_strategy: List[str]=['
         output_size, primary_site, experiment_strategy, file_format))
     fields = [
         "file_name",
+        "experimental_strategy",
         "cases.case_id",
         "cases.submitter_id",
         "cases.samples.sample_type",
