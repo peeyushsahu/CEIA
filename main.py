@@ -6,7 +6,7 @@ import json
 import sys
 # Local import
 from data_loader import gdc_upload
-from data_operations import gdc_api
+from data_download import gdc_api
 # Third party imports
 from neo4j import GraphDatabase
 
