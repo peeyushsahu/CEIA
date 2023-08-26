@@ -16,9 +16,10 @@ chain = GraphCypherQAChain.from_llm(
     ChatOpenAI(temperature=0), graph=graph, verbose=True,
 )
 
+
 chain.run("""
 Task:
-Find the path from sample to gene and identify protein_coding gene with the highest expression.fpkm value. Now get all expression values for identified gene wrt to all sample ids. Return gene id, gene name, expression.fpkm, expression.raw and sample.id?
+identify gene with the highest norm expression value. Now search this gene to find its expression in all the samples and return sample id, gene name, expression.norm, expression.raw and sample.id?
 Instructions:
 Use only the provided relationship types and properties.
 Do not use any other relationship types or properties that are not provided.

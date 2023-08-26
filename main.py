@@ -25,7 +25,7 @@ NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', 'gdcdatabase')
 OUTPUT_DIRECTORY = os.getenv('OUTPUT_DIRECTORY', 'C://Users//peeyushsahu//Downloads//ATGC')
 driver = GraphDatabase.driver('neo4j://{}:{}'.format(NEO4J_HOST, NEO4J_PORT), auth=('neo4j', NEO4J_PASSWORD))
 
-# Start the FDC data download
+# Start the GDC data download
 meta_file_name = gdc_api.bulk_download(primary_site='Blood',
                                        experiment_strategy=['RNA-Seq', 'miRNA-Seq'],
                                        file_format="TSV",
