@@ -48,3 +48,8 @@ Finally the initial pipeline can be started with,
 ````
 python3 main.py
 ````
+
+## How does the datamodel looks like
+We have created a small and simple data model to store and access data. Following is a meta graph prepared by the neo4j apoc plugin.
+
+![CeIA data model](knowledge_graph.png)
